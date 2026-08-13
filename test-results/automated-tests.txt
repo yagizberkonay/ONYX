@@ -1,0 +1,83 @@
+Onyx automated test run
+Date: 2026-08-13T16:21:01+00:00
+
+
+=== pnpm lint ===
+$ eslint
+EXIT_CODE=0
+
+=== TypeScript noEmit ===
+EXIT_CODE=0
+
+=== Next static build ===
+$ next build
+▲ Next.js 16.3.0 (Turbopack)
+✓ Running next.config.ts took 35ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 1385ms
+  Running TypeScript ...
+  Finished TypeScript in 1337ms ...
+  Collecting page data using 5 workers ...
+  Generating static pages using 5 workers (0/4) ...
+  Generating static pages using 5 workers (1/4) 
+  Generating static pages using 5 workers (2/4) 
+  Generating static pages using 5 workers (3/4) 
+✓ Generating static pages using 5 workers (4/4) in 476ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+└ ○ /_not-found
+
+
+○  (Static)  prerendered as static content
+
+EXIT_CODE=0
+
+=== cargo fmt check ===
+EXIT_CODE=0
+
+=== cargo test ===
+[1m[92m    Finished[0m `test` profile [unoptimized + debuginfo] target(s) in 0.85s
+[1m[92m     Running[0m unittests src/lib.rs (src-tauri/target/debug/deps/app_lib-45c51d1aaddc2957)
+
+running 4 tests
+test tests::accepts_nested_relative_paths ... ok
+test tests::clamps_request_timeout ... ok
+test tests::accepts_only_http_schemes ... ok
+test tests::rejects_empty_absolute_and_traversal_paths ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+[1m[92m     Running[0m unittests src/main.rs (src-tauri/target/debug/deps/app-deaf414e42e04787)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+[1m[92m   Doc-tests[0m app_lib
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+EXIT_CODE=0
+
+=== cargo check ===
+[1m[92m    Finished[0m `dev` profile [unoptimized + debuginfo] target(s) in 0.36s
+EXIT_CODE=0
+
+=== cargo clippy warnings as errors ===
+error: 'cargo-clippy' is not installed for the toolchain 'stable-x86_64-unknown-linux-gnu'.
+help: run `rustup component add clippy` to install it
+EXIT_CODE=1
+
+=== summary ===
+EXIT_CODE=0
+EXIT_CODE=0
+EXIT_CODE=0
+EXIT_CODE=0
+EXIT_CODE=0
+EXIT_CODE=0
+EXIT_CODE=1

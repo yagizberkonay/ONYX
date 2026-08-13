@@ -1,0 +1,45 @@
+Onyx Tauri production build
+Date: 2026-08-13T16:24:09+00:00
+
+$ tauri build
+[1m[32m        Info[0m Looking up installed tauri packages to check mismatched versions...
+[1m[32m     Running[0m beforeBuildCommand `pnpm build`
+$ next build
+▲ Next.js 16.3.0 (Turbopack)
+✓ Running next.config.ts took 71ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 1261ms
+  Running TypeScript ...
+  Finished TypeScript in 1313ms ...
+  Collecting page data using 5 workers ...
+  Generating static pages using 5 workers (0/4) ...
+  Generating static pages using 5 workers (1/4) 
+  Generating static pages using 5 workers (2/4) 
+  Generating static pages using 5 workers (3/4) 
+✓ Generating static pages using 5 workers (4/4) in 475ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+└ ○ /_not-found
+
+
+○  (Static)  prerendered as static content
+
+[1m[92m   Compiling[0m app v0.1.0 (/home/ubuntu/onyx/src-tauri)
+[1m[92m    Finished[0m `release` profile [optimized] target(s) in 26.69s
+[1m[32m       Built[0m application at: /home/ubuntu/onyx/src-tauri/target/release/app
+[1m[32m        Info[0m Patching /home/ubuntu/onyx/src-tauri/target/release/app with bundle type information: deb
+[1m[32m    Bundling[0m Onyx_0.1.0_amd64.deb (/home/ubuntu/onyx/src-tauri/target/release/bundle/deb/Onyx_0.1.0_amd64.deb)
+[1m[32m        Info[0m Patching /home/ubuntu/onyx/src-tauri/target/release/app with bundle type information: rpm
+[1m[32m    Bundling[0m Onyx-0.1.0-1.x86_64.rpm (/home/ubuntu/onyx/src-tauri/target/release/bundle/rpm/Onyx-0.1.0-1.x86_64.rpm)
+[1m[32m        Info[0m Patching /home/ubuntu/onyx/src-tauri/target/release/app with bundle type information: appimage
+[1m[32m    Bundling[0m Onyx_0.1.0_amd64.AppImage (/home/ubuntu/onyx/src-tauri/target/release/bundle/appimage/Onyx_0.1.0_amd64.AppImage)
+[1m[32m    Finished[0m 3 bundles at:
+        /home/ubuntu/onyx/src-tauri/target/release/bundle/deb/Onyx_0.1.0_amd64.deb
+        /home/ubuntu/onyx/src-tauri/target/release/bundle/rpm/Onyx-0.1.0-1.x86_64.rpm
+        /home/ubuntu/onyx/src-tauri/target/release/bundle/appimage/Onyx_0.1.0_amd64.AppImage
+
+
+EXIT_CODE=0
