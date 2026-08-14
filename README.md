@@ -337,10 +337,6 @@ Bu sürüm günlük REST/HTTP geliştirme akışını ve kontrollü Gemini deste
 
 Gemini agent kullanımı da Google Gemini API’nin model erişimi, kota, fiyatlandırma ve bölgesel kullanılabilirlik koşullarına bağlıdır. Onyx key üretmez, Google hesabına erişmez ve Gemini faturalandırmasını yönetmez. API key veya model erişim hataları Google AI Studio/API tarafında çözülmelidir.
 
-## Lisans
-
-Proje şu anda `package.json` veya `Cargo.toml` içinde bir açık kaynak lisansı tanımlamamaktadır. Dağıtıma açılmadan önce ürün sahibi tarafından uygun bir lisans seçilmeli ve repository köküne `LICENSE` dosyası eklenmelidir.
-
 ## Kaynaklar
 
 [1]: https://v2.tauri.app/start/frontend/nextjs/ "Tauri v2 — Next.js frontend"
