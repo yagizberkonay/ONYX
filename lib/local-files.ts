@@ -4,8 +4,10 @@ import type {
   AgentAuditFile,
   FileSnapshot,
   NativeHttpRequest,
-  GeminiInteractionRequest,
-  GeminiInteractionResponse,
+  AgentInteractionRequest,
+  AgentKeyStatus,
+  AgentProvider,
+  AgentInteractionResponse,
   NativeHttpResponse,
   WorkspaceInfo,
 } from "@/lib/onyx-types";
@@ -37,6 +39,14 @@ export async function readLocalFile(relativePath: string): Promise<FileSnapshot>
     content: content ?? "",
     exists: content !== null,
   };
+}
+
+export async function readOpenedOnyxFile(path: string): Promise<FileSnapshot> {
+  if (isTauriRuntime()) {
+    return invoke<FileSnapshot>("read_onyx_file", { path });
+  }
+
+  throw new Error("Opening an associated .onyx file requires the native Onyx runtime.");
 }
 
 export async function writeLocalFile(
@@ -131,14 +141,52 @@ export async function writeAgentAudit(audit: AgentAuditFile): Promise<FileSnapsh
   return writeLocalFile("agent-audit.json", JSON.stringify(audit, null, 2));
 }
 
-export async function executeGeminiInteraction(
-  request: GeminiInteractionRequest,
-): Promise<GeminiInteractionResponse> {
+export async function executeAgentInteraction(
+  request: AgentInteractionRequest,
+): Promise<AgentInteractionResponse> {
   if (!isTauriRuntime()) {
-    throw new Error("Gemini agent execution is available only in the Tauri desktop app.");
+    throw new Error("AI agent execution is available only in the Tauri desktop app.");
   }
 
-  return invoke<GeminiInteractionResponse>("execute_gemini_interaction", { request });
+  return invoke<AgentInteractionResponse>("execute_agent_interaction", { request });
+}
+
+export async function executeGeminiInteraction(
+  request: AgentInteractionRequest,
+): Promise<AgentInteractionResponse> {
+  return executeAgentInteraction({ ...request, provider: "gemini" });
+}
+
+export async function getAgentKeyStatuses(): Promise<AgentKeyStatus> {
+  if (isTauriRuntime()) {
+    return invoke<AgentKeyStatus>("get_agent_key_statuses");
+  }
+
+  return { openai: false, anthropic: false, gemini: false, manus: false, kimi: false, groq: false };
+}
+
+export async function getAgentKeyStatus(provider: AgentProvider): Promise<boolean> {
+  if (isTauriRuntime()) {
+    return invoke<boolean>("get_agent_key_status", { provider });
+  }
+
+  return false;
+}
+
+export async function setAgentApiKey(provider: AgentProvider, apiKey: string): Promise<void> {
+  if (!isTauriRuntime()) {
+    throw new Error("AI API key storage is available only in the Tauri desktop app.");
+  }
+
+  await invoke("set_agent_api_key", { provider, apiKey });
+}
+
+export async function deleteAgentApiKey(provider: AgentProvider): Promise<void> {
+  if (!isTauriRuntime()) {
+    throw new Error("AI API key storage is available only in the Tauri desktop app.");
+  }
+
+  await invoke("delete_agent_api_key", { provider });
 }
 
 export async function getGeminiKeyStatus(): Promise<boolean> {

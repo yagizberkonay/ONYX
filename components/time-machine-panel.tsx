@@ -1,0 +1,23 @@
+import type { HistoryEntry } from "@/lib/onyx-types";
+
+interface TimeMachinePanelProps {
+  entries: HistoryEntry[];
+  selectedId?: string;
+  onSelect: (entry: HistoryEntry) => void;
+  onReplay: (entry: HistoryEntry) => void;
+  onClose: () => void;
+}
+
+export function TimeMachinePanel({ entries, selectedId, onSelect, onReplay, onClose }: TimeMachinePanelProps) {
+  const selected = entries.find((entry) => entry.id === selectedId) ?? entries[0];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4" onClick={onClose}>
+      <section aria-label="Request Time Machine" className="flex max-h-[86vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_24px_80px_rgba(0,0,0,0.4)]" onClick={(event) => event.stopPropagation()}>
+        <header className="flex items-center justify-between border-b border-border px-5 py-4"><div><div className="text-sm font-semibold text-neutral-100">Request Time Machine</div><div className="mt-1 text-[11px] text-neutral-600">Inspect the exact request context that produced a response, then replay it.</div></div><button className="rounded-lg border border-border px-3 py-1.5 text-[11px] text-neutral-400 hover:border-border-strong hover:text-neutral-100" onClick={onClose} type="button">Close</button></header>
+        {entries.length === 0 ? <div className="p-10 text-center text-[12px] text-neutral-600">Run a request to create the first local snapshot.</div> : <div className="grid min-h-0 flex-1 grid-cols-[minmax(220px,0.8fr)_minmax(0,1.4fr)]"><div className="min-h-0 overflow-y-auto border-r border-border p-3">{entries.map((entry) => <button className={`mb-2 w-full rounded-xl border px-3 py-3 text-left transition-colors ${selected?.id === entry.id ? "border-border-strong bg-surface-active" : "border-border bg-surface-raised hover:bg-surface-hover"}`} key={entry.id} onClick={() => onSelect(entry)} type="button"><div className="flex items-center justify-between gap-2"><span className="font-mono text-[10px] text-neutral-500">{entry.method}</span><span className={`font-mono text-[10px] ${entry.status && entry.status >= 200 && entry.status < 400 ? "text-neutral-200" : "text-neutral-600"}`}>{entry.status ?? "ERR"}</span></div><div className="mt-1 truncate text-[11px] text-neutral-300">{entry.name}</div><div className="mt-1 truncate font-mono text-[10px] text-neutral-600">{entry.url}</div><div className="mt-2 text-[9px] text-neutral-700">{new Date(entry.createdAt).toLocaleString()}</div></button>)}</div><div className="min-h-0 overflow-y-auto p-5">{selected ? <><div className="flex items-start justify-between gap-4"><div><div className="text-sm font-medium text-neutral-100">{selected.name}</div><div className="mt-1 font-mono text-[10px] text-neutral-600">{selected.method} {selected.resolvedUrl ?? selected.url}</div></div><button className="rounded-lg bg-neutral-200 px-3 py-2 text-[11px] font-semibold text-black hover:bg-white" onClick={() => onReplay(selected)} type="button">Replay snapshot</button></div><div className="mt-5 grid grid-cols-3 gap-2 text-[10px]"><div className="rounded-xl border border-border bg-surface-raised p-3"><div className="text-neutral-600">Status</div><div className="mt-1 font-mono text-neutral-200">{selected.status ?? "ERR"} {selected.statusText}</div></div><div className="rounded-xl border border-border bg-surface-raised p-3"><div className="text-neutral-600">Duration</div><div className="mt-1 font-mono text-neutral-200">{selected.responseTimeMs ?? "—"} ms</div></div><div className="rounded-xl border border-border bg-surface-raised p-3"><div className="text-neutral-600">Environment</div><div className="mt-1 font-mono text-neutral-200">{selected.environmentId ?? "unknown"}</div></div></div><div className="mt-4"><div className="mb-2 text-[10px] uppercase tracking-[0.14em] text-neutral-600">Request body at capture</div><pre className="max-h-40 overflow-auto whitespace-pre-wrap rounded-xl border border-border bg-black/20 p-3 font-mono text-[10px] leading-4 text-neutral-400">{selected.requestBody || "<empty body>"}</pre></div><div className="mt-4"><div className="mb-2 text-[10px] uppercase tracking-[0.14em] text-neutral-600">Response body at capture</div><pre className="max-h-52 overflow-auto whitespace-pre-wrap rounded-xl border border-border bg-black/20 p-3 font-mono text-[10px] leading-4 text-neutral-400">{selected.responseBody || "<empty response>"}</pre></div></> : null}</div></div>}
+        <footer className="border-t border-border px-5 py-3 font-mono text-[10px] text-neutral-600">Snapshots stay in local history.json and never leave the workspace.</footer>
+      </section>
+    </div>
+  );
+}

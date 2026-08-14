@@ -11,87 +11,166 @@
       body {
         display: grid;
         place-items: center;
-        background: transparent;
-        color: #f1f3f5;
+        background:
+          radial-gradient(circle at 50% 42%, rgba(111, 127, 143, .16), transparent 34%),
+          linear-gradient(145deg, #0b0e12 0%, #10151b 56%, #0a0d10 100%);
+        color: #f1f4f6;
         font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         -webkit-font-smoothing: antialiased;
       }
-      .card {
+      body::before {
+        position: absolute;
+        inset: 0;
+        background-image: linear-gradient(rgba(255, 255, 255, .022) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, .022) 1px, transparent 1px);
+        background-size: 32px 32px;
+        mask-image: linear-gradient(to bottom, transparent, black 35%, transparent 100%);
+        content: "";
+        opacity: .38;
+      }
+      .splash {
+        position: relative;
         display: flex;
-        width: 300px;
+        width: 100%;
+        height: 100%;
         flex-direction: column;
         align-items: center;
-        border: 1px solid rgba(59, 68, 78, .78);
-        border-radius: 18px;
-        background: rgba(17, 20, 23, .96);
-        box-shadow: 0 24px 80px rgba(0, 0, 0, .38), inset 0 1px 0 rgba(255, 255, 255, .035);
-        padding: 34px 32px 26px;
+        justify-content: center;
+        padding: 28px 36px 22px;
       }
-      .mark {
-        display: grid;
-        width: 50px;
-        height: 50px;
-        place-items: center;
-        border: 1px solid #aeb6bf;
-        color: #f1f3f5;
+      .eyebrow {
+        position: absolute;
+        top: 18px;
+        left: 24px;
+        color: #66717d;
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-        font-size: 18px;
+        font-size: 8px;
+        letter-spacing: .2em;
+        text-transform: uppercase;
+      }
+      .version {
+        position: absolute;
+        top: 18px;
+        right: 24px;
+        color: #66717d;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        font-size: 8px;
+        letter-spacing: .08em;
+      }
+      .mark-wrap {
+        position: relative;
+        display: grid;
+        width: 86px;
+        height: 86px;
+        place-items: center;
+      }
+      .orbit {
+        position: absolute;
+        inset: 0;
+        border: 1px solid rgba(213, 222, 230, .18);
+        border-radius: 999px;
+        box-shadow: 0 0 44px rgba(205, 216, 226, .08);
+        animation: orbit 4s ease-in-out infinite;
+      }
+      .orbit::before,
+      .orbit::after {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        border-radius: 999px;
+        background: #dce3e8;
+        box-shadow: 0 0 14px rgba(220, 227, 232, .8);
+        content: "";
+      }
+      .orbit::before { top: 11px; left: 50%; }
+      .orbit::after { right: 10px; bottom: 22px; opacity: .5; }
+      .mark {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        width: 48px;
+        height: 48px;
+        place-items: center;
+        border: 1px solid #b6c0c9;
+        border-radius: 14px;
+        background: rgba(10, 13, 16, .72);
+        color: #f5f7f8;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        font-size: 17px;
         font-weight: 700;
         letter-spacing: -.12em;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1), 0 12px 32px rgba(0, 0, 0, .3);
         animation: breathe 1.8s ease-in-out infinite;
       }
       .name {
-        margin-top: 16px;
-        color: #e8ebee;
+        margin-top: 17px;
+        padding-left: .28em;
+        color: #f0f3f5;
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-        font-size: 12px;
+        font-size: 13px;
         font-weight: 700;
         letter-spacing: .28em;
-        padding-left: .28em;
       }
       .caption {
         margin-top: 8px;
-        color: #737b85;
+        color: #7b8792;
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-        font-size: 10px;
-        letter-spacing: .04em;
+        font-size: 9px;
+        letter-spacing: .06em;
       }
       .track {
-        width: 100%;
+        width: min(240px, 100%);
         height: 2px;
         margin-top: 26px;
         overflow: hidden;
         border-radius: 999px;
-        background: #252b32;
+        background: rgba(152, 164, 175, .18);
       }
       .track span {
         display: block;
         width: 100%;
         height: 100%;
         transform-origin: left center;
-        background: #bfc6cd;
+        background: linear-gradient(90deg, #7f8c98, #e1e6ea);
         animation: fill 3s linear forwards;
       }
-      @keyframes breathe {
-        0%, 100% { opacity: .72; transform: scale(.98); }
-        50% { opacity: 1; transform: scale(1); }
+      .status {
+        position: absolute;
+        bottom: 18px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        color: #5f6a75;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        font-size: 8px;
+        letter-spacing: .08em;
+        text-transform: uppercase;
       }
-      @keyframes fill {
-        from { transform: scaleX(0); }
-        to { transform: scaleX(1); }
+      .status::before {
+        width: 5px;
+        height: 5px;
+        border-radius: 999px;
+        background: #bfc8d0;
+        box-shadow: 0 0 10px rgba(191, 200, 208, .72);
+        content: "";
       }
+      @keyframes breathe { 0%, 100% { opacity: .78; transform: scale(.98); } 50% { opacity: 1; transform: scale(1); } }
+      @keyframes orbit { 0%, 100% { transform: rotate(-8deg) scale(.98); opacity: .66; } 50% { transform: rotate(8deg) scale(1.03); opacity: 1; } }
+      @keyframes fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
       @media (prefers-reduced-motion: reduce) {
-        .mark { animation: none; }
+        .mark, .orbit { animation: none; }
         .track span { animation-duration: .01ms; }
       }
     </style>
   </head>
   <body>
-    <main class="card" aria-label="Onyx loading">
-      <div class="mark" aria-hidden="true">O/</div>
+    <main class="splash" aria-label="Onyx loading">
+      <span class="eyebrow">Local-first workspace</span>
+      <span class="version">TAURI / RUST</span>
+      <div class="mark-wrap"><div class="orbit" aria-hidden="true"></div><div class="mark" aria-hidden="true">O/</div></div>
       <div class="name">ONYX</div>
-      <div class="caption">Local-first API workspace</div>
+      <div class="caption">Build, inspect, and ship APIs locally.</div>
       <div class="track" aria-hidden="true"><span></span></div>
+      <div class="status">Initializing native workspace</div>
     </main>
   </body>
 </html>

@@ -49,6 +49,15 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
+    "fileAssociations": [
+      {
+        "ext": ["onyx"],
+        "name": "Onyx Document",
+        "description": "Onyx local API notebook and review document",
+        "mimeType": "application/vnd.onyx.document",
+        "role": "Editor"
+      }
+    ],
     "android": {
       "debugApplicationIdSuffix": ".debug"
     }

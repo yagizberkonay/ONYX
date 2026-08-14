@@ -65,6 +65,13 @@ export interface HistoryEntry {
   responseBody: string;
   responseHeaders: HeaderEntry[];
   createdAt: string;
+  requestHeaders?: HeaderEntry[];
+  requestBody?: string;
+  environmentId?: string;
+  resolvedUrl?: string;
+  contentType?: string | null;
+  truncated?: boolean;
+  timing?: ResponseTiming;
   error?: string;
 }
 
@@ -73,13 +80,81 @@ export interface HistoryFile {
   entries: HistoryEntry[];
 }
 
+export type AppearanceTheme = "onyx" | "midnight" | "graphite";
+export type UiDensity = "compact" | "comfortable";
+
+export interface AppearanceSettings {
+  theme: AppearanceTheme;
+  density: UiDensity;
+  reduceMotion: boolean;
+}
+
+export interface EditorSettings {
+  fontSize: number;
+  wordWrap: boolean;
+  tabSize: 2 | 4;
+}
+
+export interface LayoutSettings {
+  sidebarWidth: number;
+  showStatusBar: boolean;
+  restoreTabs: boolean;
+}
+
+export interface StartupSettings {
+  showSplash: boolean;
+  showWelcome: boolean;
+  restoreWorkspace: boolean;
+}
+
+export interface NotificationSettings {
+  enabled: boolean;
+  requestCompletion: boolean;
+  errors: boolean;
+}
+
 export interface AppSettings {
   version: 1;
   workspaceRoot: string | null;
   activeEnvironmentId: string;
   recentWorkspaceRoots: string[];
-  gemini: GeminiSettings;
+  appearance: AppearanceSettings;
+  editor: EditorSettings;
+  layout: LayoutSettings;
+  startup: StartupSettings;
+  notifications: NotificationSettings;
+  gemini: AgentSettings;
 }
+
+export const DEFAULT_APPEARANCE_SETTINGS: AppearanceSettings = {
+  theme: "onyx",
+  density: "comfortable",
+  reduceMotion: false,
+};
+
+export const DEFAULT_EDITOR_SETTINGS: EditorSettings = {
+  fontSize: 12,
+  wordWrap: true,
+  tabSize: 2,
+};
+
+export const DEFAULT_LAYOUT_SETTINGS: LayoutSettings = {
+  sidebarWidth: 288,
+  showStatusBar: true,
+  restoreTabs: true,
+};
+
+export const DEFAULT_STARTUP_SETTINGS: StartupSettings = {
+  showSplash: true,
+  showWelcome: true,
+  restoreWorkspace: true,
+};
+
+export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
+  enabled: true,
+  requestCompletion: true,
+  errors: true,
+};
 
 export interface WorkspaceInfo {
   root: string;
@@ -113,39 +188,75 @@ export interface NativeHttpResponse {
   timing?: ResponseTiming;
 }
 
-export interface GeminiToolDeclaration {
+export interface AgentToolDeclaration {
   type: "function";
   name: string;
   description: string;
   parameters: Record<string, unknown>;
 }
 
-export interface GeminiInteractionRequest {
+/** @deprecated Use AgentToolDeclaration. */
+export type GeminiToolDeclaration = AgentToolDeclaration;
+
+export type AgentProvider = "openai" | "anthropic" | "gemini" | "manus" | "kimi" | "groq";
+
+export const AGENT_PROVIDER_OPTIONS: Array<{
+  id: AgentProvider;
+  label: string;
+  description: string;
+  defaultModel: string;
+}> = [
+  { id: "openai", label: "ChatGPT / OpenAI", description: "OpenAI Responses-compatible model access.", defaultModel: "gpt-5-mini" },
+  { id: "anthropic", label: "Claude / Anthropic", description: "Claude Messages API with native tool support.", defaultModel: "claude-sonnet-4-6" },
+  { id: "gemini", label: "Gemini / Google", description: "Gemini Interactions API for agent workflows.", defaultModel: "gemini-3.6-flash" },
+  { id: "manus", label: "Manus", description: "Asynchronous Manus task execution.", defaultModel: "manus-1.6-lite" },
+  { id: "kimi", label: "Kimi / Moonshot", description: "OpenAI-compatible Kimi API access.", defaultModel: "kimi-k3" },
+  { id: "groq", label: "Groq", description: "OpenAI-compatible low-latency inference.", defaultModel: "llama-3.3-70b-versatile" },
+];
+
+export function isAgentProvider(value: unknown): value is AgentProvider {
+  return AGENT_PROVIDER_OPTIONS.some((provider) => provider.id === value);
+}
+
+export type AgentKeyStatus = Record<AgentProvider, boolean>;
+
+export interface AgentInteractionRequest {
+  provider?: AgentProvider;
   model: string;
   input: string;
   systemInstruction?: string;
   temperature?: number;
   maxOutputTokens?: number;
   previousInteractionId?: string;
-  tools?: GeminiToolDeclaration[];
+  tools?: AgentToolDeclaration[];
   timeoutMs?: number;
+  endpointOverride?: string;
 }
 
-export interface GeminiToolCall {
+/** @deprecated Use AgentInteractionRequest. */
+export type GeminiInteractionRequest = AgentInteractionRequest;
+
+export interface AgentToolCall {
   id?: string;
   name: string;
   arguments: unknown;
 }
 
-export interface GeminiInteractionResponse {
+/** @deprecated Use AgentToolCall. */
+export type GeminiToolCall = AgentToolCall;
+
+export interface AgentInteractionResponse {
   interactionId?: string;
   status?: string;
   text: string;
-  toolCalls: GeminiToolCall[];
+  toolCalls: AgentToolCall[];
   totalTokens?: number;
   raw: unknown;
   responseTimeMs: number;
 }
+
+/** @deprecated Use AgentInteractionResponse. */
+export type GeminiInteractionResponse = AgentInteractionResponse;
 
 export type AgentMode = "suggest" | "confirm" | "autonomous";
 
@@ -155,10 +266,13 @@ export interface AgentPolicy {
   requireApprovalForNetwork: boolean;
   requireApprovalForFileWrites: boolean;
   maskSecrets: boolean;
+  shareRequestBody: boolean;
 }
 
-export interface GeminiSettings {
+export interface AgentSettings {
   enabled: boolean;
+  provider: AgentProvider;
+  endpointOverride: string;
   model: string;
   temperature: number;
   maxOutputTokens: number;
@@ -166,6 +280,9 @@ export interface GeminiSettings {
   storeInteractions: false;
   policy: AgentPolicy;
 }
+
+/** @deprecated Use AgentSettings. */
+export type GeminiSettings = AgentSettings;
 
 export type AgentToolRisk = "read" | "network" | "filesystem";
 export type AgentAuditDecision = "pending" | "auto-approved" | "approved" | "rejected" | "failed";
@@ -185,8 +302,10 @@ export interface AgentAuditFile {
   entries: AgentAuditEntry[];
 }
 
-export const DEFAULT_GEMINI_SETTINGS: GeminiSettings = {
+export const DEFAULT_AGENT_SETTINGS: AgentSettings = {
   enabled: false,
+  provider: "gemini",
+  endpointOverride: "",
   model: "gemini-3.6-flash",
   temperature: 0.2,
   maxOutputTokens: 4096,
@@ -198,8 +317,12 @@ export const DEFAULT_GEMINI_SETTINGS: GeminiSettings = {
     requireApprovalForNetwork: true,
     requireApprovalForFileWrites: true,
     maskSecrets: true,
+    shareRequestBody: false,
   },
 };
+
+/** @deprecated Use DEFAULT_AGENT_SETTINGS. */
+export const DEFAULT_GEMINI_SETTINGS = DEFAULT_AGENT_SETTINGS;
 
 export interface FileSnapshot {
   path: string;
@@ -279,7 +402,12 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   workspaceRoot: null,
   activeEnvironmentId: DEFAULT_ENVIRONMENT_FILE.activeEnvironmentId,
   recentWorkspaceRoots: [],
-  gemini: DEFAULT_GEMINI_SETTINGS,
+  appearance: DEFAULT_APPEARANCE_SETTINGS,
+  editor: DEFAULT_EDITOR_SETTINGS,
+  layout: DEFAULT_LAYOUT_SETTINGS,
+  startup: DEFAULT_STARTUP_SETTINGS,
+  notifications: DEFAULT_NOTIFICATION_SETTINGS,
+  gemini: DEFAULT_AGENT_SETTINGS,
 };
 
 export function makeId(prefix: string): string {
@@ -472,10 +600,21 @@ export function normalizeHistoryFile(value: unknown): HistoryFile {
 export function normalizeAppSettings(value: unknown): AppSettings {
   if (!value || typeof value !== "object") return DEFAULT_APP_SETTINGS;
   const candidate = value as Partial<AppSettings>;
-  const candidateGemini = candidate.gemini as Partial<GeminiSettings> | undefined;
+  const candidateAppearance = candidate.appearance as Partial<AppearanceSettings> | undefined;
+  const candidateEditor = candidate.editor as Partial<EditorSettings> | undefined;
+  const candidateLayout = candidate.layout as Partial<LayoutSettings> | undefined;
+  const candidateStartup = candidate.startup as Partial<StartupSettings> | undefined;
+  const candidateNotifications = candidate.notifications as Partial<NotificationSettings> | undefined;
+  const candidateGemini = candidate.gemini as Partial<AgentSettings> | undefined;
   const candidatePolicy = candidateGemini?.policy as Partial<AgentPolicy> | undefined;
+  const normalizedProvider: AgentProvider = isAgentProvider(candidateGemini?.provider)
+    ? candidateGemini.provider
+    : DEFAULT_AGENT_SETTINGS.provider;
   const mode = candidatePolicy?.mode;
   const normalizedMode: AgentMode = mode === "suggest" || mode === "autonomous" ? mode : "confirm";
+  const theme = candidateAppearance?.theme;
+  const density = candidateAppearance?.density;
+  const tabSize = candidateEditor?.tabSize;
 
   return {
     version: 1,
@@ -487,20 +626,53 @@ export function normalizeAppSettings(value: unknown): AppSettings {
     recentWorkspaceRoots: Array.isArray(candidate.recentWorkspaceRoots)
       ? candidate.recentWorkspaceRoots.filter((root): root is string => typeof root === "string").slice(0, 8)
       : [],
+    appearance: {
+      theme: theme === "midnight" || theme === "graphite" ? theme : DEFAULT_APPEARANCE_SETTINGS.theme,
+      density: density === "compact" ? density : DEFAULT_APPEARANCE_SETTINGS.density,
+      reduceMotion: candidateAppearance?.reduceMotion === true,
+    },
+    editor: {
+      fontSize: typeof candidateEditor?.fontSize === "number" && Number.isFinite(candidateEditor.fontSize)
+        ? Math.min(18, Math.max(10, Math.round(candidateEditor.fontSize)))
+        : DEFAULT_EDITOR_SETTINGS.fontSize,
+      wordWrap: candidateEditor?.wordWrap !== false,
+      tabSize: tabSize === 4 ? 4 : DEFAULT_EDITOR_SETTINGS.tabSize,
+    },
+    layout: {
+      sidebarWidth: typeof candidateLayout?.sidebarWidth === "number" && Number.isFinite(candidateLayout.sidebarWidth)
+        ? Math.min(420, Math.max(240, Math.round(candidateLayout.sidebarWidth)))
+        : DEFAULT_LAYOUT_SETTINGS.sidebarWidth,
+      showStatusBar: candidateLayout?.showStatusBar !== false,
+      restoreTabs: candidateLayout?.restoreTabs !== false,
+    },
+    startup: {
+      showSplash: candidateStartup?.showSplash !== false,
+      showWelcome: candidateStartup?.showWelcome !== false,
+      restoreWorkspace: candidateStartup?.restoreWorkspace !== false,
+    },
+    notifications: {
+      enabled: candidateNotifications?.enabled !== false,
+      requestCompletion: candidateNotifications?.requestCompletion !== false,
+      errors: candidateNotifications?.errors !== false,
+    },
     gemini: {
       enabled: candidateGemini?.enabled === true,
+      provider: normalizedProvider,
+      endpointOverride: typeof candidateGemini?.endpointOverride === "string"
+        ? candidateGemini.endpointOverride.trim().slice(0, 512)
+        : DEFAULT_AGENT_SETTINGS.endpointOverride,
       model: typeof candidateGemini?.model === "string" && candidateGemini.model.trim()
         ? candidateGemini.model.trim().slice(0, 128)
-        : DEFAULT_GEMINI_SETTINGS.model,
+        : DEFAULT_AGENT_SETTINGS.model,
       temperature: typeof candidateGemini?.temperature === "number" && Number.isFinite(candidateGemini.temperature)
         ? Math.min(2, Math.max(0, candidateGemini.temperature))
-        : DEFAULT_GEMINI_SETTINGS.temperature,
+        : DEFAULT_AGENT_SETTINGS.temperature,
       maxOutputTokens: typeof candidateGemini?.maxOutputTokens === "number" && Number.isFinite(candidateGemini.maxOutputTokens)
         ? Math.min(65_536, Math.max(1, Math.round(candidateGemini.maxOutputTokens)))
-        : DEFAULT_GEMINI_SETTINGS.maxOutputTokens,
+        : DEFAULT_AGENT_SETTINGS.maxOutputTokens,
       timeoutMs: typeof candidateGemini?.timeoutMs === "number" && Number.isFinite(candidateGemini.timeoutMs)
         ? Math.min(120_000, Math.max(5_000, Math.round(candidateGemini.timeoutMs)))
-        : DEFAULT_GEMINI_SETTINGS.timeoutMs,
+        : DEFAULT_AGENT_SETTINGS.timeoutMs,
       storeInteractions: false,
       policy: {
         mode: normalizedMode,
@@ -508,6 +680,7 @@ export function normalizeAppSettings(value: unknown): AppSettings {
         requireApprovalForNetwork: candidatePolicy?.requireApprovalForNetwork !== false,
         requireApprovalForFileWrites: candidatePolicy?.requireApprovalForFileWrites !== false,
         maskSecrets: candidatePolicy?.maskSecrets !== false,
+        shareRequestBody: candidatePolicy?.shareRequestBody === true,
       },
     },
   };

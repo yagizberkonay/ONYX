@@ -2,12 +2,15 @@
 
 import { useMemo, useState } from "react";
 
-import { executeGeminiInteraction } from "@/lib/local-files";
+import { executeAgentInteraction } from "@/lib/local-files";
+import {
+  AGENT_PROVIDER_OPTIONS,
+} from "@/lib/onyx-types";
 import type {
-  GeminiInteractionResponse,
-  GeminiSettings,
-  GeminiToolCall,
-  GeminiToolDeclaration,
+  AgentInteractionResponse,
+  AgentSettings,
+  AgentToolCall,
+  AgentToolDeclaration,
 } from "@/lib/onyx-types";
 
 type ChatMessage = {
@@ -21,17 +24,17 @@ type ToolResult = {
   message: string;
 };
 
-interface GeminiAssistantProps {
-  settings: GeminiSettings;
+interface OnyxAgentProps {
+  settings: AgentSettings;
   keyConfigured: boolean;
   context: string;
   onOpenSettings: () => void;
   onClose: () => void;
-  onToolRejected: (call: GeminiToolCall) => Promise<void>;
-  onToolCall: (call: GeminiToolCall, approved: boolean) => Promise<ToolResult>;
+  onToolRejected: (call: AgentToolCall) => Promise<void>;
+  onToolCall: (call: AgentToolCall, approved: boolean) => Promise<ToolResult>;
 }
 
-const TOOL_DECLARATIONS: GeminiToolDeclaration[] = [
+const TOOL_DECLARATIONS: AgentToolDeclaration[] = [
   {
     type: "function",
     name: "inspect_current_request",
@@ -59,14 +62,14 @@ const TOOL_DECLARATIONS: GeminiToolDeclaration[] = [
 ];
 
 function makeMessageId(): string {
-  return `gemini-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  return `onyx-agent-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-function toolSummary(call: GeminiToolCall): string {
+function toolSummary(call: AgentToolCall): string {
   return `${call.name}${call.arguments && typeof call.arguments === "object" ? ` ${JSON.stringify(call.arguments)}` : ""}`;
 }
 
-export function GeminiAssistant({
+export function OnyxAgent({
   settings,
   keyConfigured,
   context,
@@ -74,13 +77,18 @@ export function GeminiAssistant({
   onClose,
   onToolRejected,
   onToolCall,
-}: GeminiAssistantProps) {
+}: OnyxAgentProps) {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [pendingAction, setPendingAction] = useState<GeminiToolCall | null>(null);
+  const [pendingAction, setPendingAction] = useState<AgentToolCall | null>(null);
   const [isBusy, setIsBusy] = useState(false);
   const [status, setStatus] = useState("Ready");
   const [previousInteractionId, setPreviousInteractionId] = useState<string | undefined>();
+
+  const providerLabel = useMemo(
+    () => AGENT_PROVIDER_OPTIONS.find((provider) => provider.id === settings.provider)?.label ?? settings.provider,
+    [settings.provider],
+  );
 
   const policyLabel = useMemo(() => {
     if (settings.policy.mode === "autonomous") return "Autonomous · policy guarded";
@@ -88,7 +96,7 @@ export function GeminiAssistant({
     return "Confirm side effects";
   }, [settings.policy.mode]);
 
-  async function processToolCall(call: GeminiToolCall, approved = false): Promise<ToolResult> {
+  async function processToolCall(call: AgentToolCall, approved = false): Promise<ToolResult> {
     const result = await onToolCall(call, approved);
     if (result.status === "approval-required") {
       setPendingAction(call);
@@ -113,7 +121,8 @@ export function GeminiAssistant({
     const maxSteps = 6;
 
     for (let step = 0; step < maxSteps; step += 1) {
-      const result: GeminiInteractionResponse = await executeGeminiInteraction({
+      const result: AgentInteractionResponse = await executeAgentInteraction({
+        provider: settings.provider,
         model: settings.model,
         input: nextInput,
         systemInstruction: [
@@ -128,6 +137,7 @@ export function GeminiAssistant({
         previousInteractionId: interactionId,
         tools: TOOL_DECLARATIONS,
         timeoutMs: settings.timeoutMs,
+        endpointOverride: settings.endpointOverride || undefined,
       });
       interactionId = result.interactionId;
       setPreviousInteractionId(result.interactionId);
@@ -158,11 +168,11 @@ export function GeminiAssistant({
     const prompt = input.trim();
     if (!prompt || isBusy) return;
     if (!settings.enabled) {
-      setStatus("Enable Gemini in Settings first");
+      setStatus("Enable the AI agent in Settings first");
       return;
     }
     if (!keyConfigured) {
-      setStatus("Configure a Gemini API key in Settings first");
+      setStatus(`Configure a ${providerLabel} API key in Settings first`);
       return;
     }
 
@@ -175,7 +185,7 @@ export function GeminiAssistant({
       await runAgentLoop(`${prompt}\n\nCurrent Onyx context:\n${context}`);
     } catch (error) {
       setMessages((current) => [...current, { id: makeMessageId(), role: "system", content: error instanceof Error ? error.message : String(error) }]);
-      setStatus("Gemini request failed");
+      setStatus(`${providerLabel} request failed`);
     } finally {
       setIsBusy(false);
     }
@@ -217,24 +227,24 @@ export function GeminiAssistant({
     <section className="flex min-h-0 flex-1 flex-col border-l border-border bg-[#0d0d0d]">
       <div className="flex items-center justify-between border-b border-border px-3 py-2">
         <div>
-          <div className="text-[11px] font-medium text-neutral-200">Gemini Agent</div>
-          <div className="mt-0.5 font-mono text-[10px] text-neutral-600">{settings.model} · {policyLabel}</div>
+          <div className="text-[11px] font-medium text-neutral-200">Onyx Agent</div>
+          <div className="mt-0.5 font-mono text-[10px] text-neutral-600">{providerLabel} · {settings.model} · {policyLabel}</div>
         </div>
         <div className="flex items-center gap-2">
           <span className={`font-mono text-[10px] ${keyConfigured ? "text-neutral-300" : "text-neutral-600"}`}>{keyConfigured ? "KEYCHAIN READY" : "NO KEY"}</span>
           <button className="border border-border px-2 py-1 text-[10px] text-neutral-500 hover:border-border-strong hover:text-neutral-200" onClick={onOpenSettings} type="button">Settings</button>
-          <button className="border border-border px-2 py-1 text-[10px] text-neutral-500 hover:border-border-strong hover:text-neutral-200" disabled={messages.length === 0 && !previousInteractionId} onClick={clearConversation} type="button">Clear</button><button aria-label="Close Gemini Agent" className="border border-border px-2 py-1 text-[10px] text-neutral-500 hover:border-border-strong hover:text-neutral-200" onClick={onClose} type="button">Close</button>
+          <button className="border border-border px-2 py-1 text-[10px] text-neutral-500 hover:border-border-strong hover:text-neutral-200" disabled={messages.length === 0 && !previousInteractionId} onClick={clearConversation} type="button">Clear</button><button aria-label="Close Onyx Agent" className="border border-border px-2 py-1 text-[10px] text-neutral-500 hover:border-border-strong hover:text-neutral-200" onClick={onClose} type="button">Close</button>
         </div>
       </div>
 
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3">
         {!settings.enabled || !keyConfigured ? (
           <div className="border border-dashed border-border p-3 text-[11px] leading-5 text-neutral-500">
-            {settings.enabled ? "Add a Gemini API key in the operating system keychain to activate the agent." : "Enable Gemini Agent in Settings to analyze requests and responses."}
-            <button className="mt-2 block text-neutral-300 underline underline-offset-2" onClick={onOpenSettings} type="button">Open Gemini settings</button>
+            {settings.enabled ? `Add a ${providerLabel} API key in the operating system keychain to activate the agent.` : "Enable Onyx Agent in Settings to analyze requests and responses."}
+            <button className="mt-2 block text-neutral-300 underline underline-offset-2" onClick={onOpenSettings} type="button">Open Agent settings</button>
           </div>
         ) : null}
-        {messages.length === 0 && settings.enabled && keyConfigured ? <div className="text-[11px] leading-5 text-neutral-600">Ask Gemini to inspect the current request, explain a response, suggest headers, or send the request after approval.</div> : null}
+        {messages.length === 0 && settings.enabled && keyConfigured ? <div className="text-[11px] leading-5 text-neutral-600">Ask Onyx Agent to inspect the current request, explain a response, suggest headers, or send the request after approval.</div> : null}
         {messages.map((message) => (
           <div className={`border-l-2 px-3 py-2 text-[11px] leading-5 ${message.role === "user" ? "border-neutral-600 text-neutral-300" : message.role === "assistant" ? "border-neutral-300 text-neutral-200" : "border-neutral-800 text-neutral-500"}`} key={message.id}>
             <div className="mb-1 font-mono text-[9px] uppercase tracking-[0.14em] text-neutral-700">{message.role}</div>
@@ -251,8 +261,8 @@ export function GeminiAssistant({
       </div>
 
       <div className="border-t border-border p-2">
-        <textarea aria-label="Gemini agent prompt" className="min-h-[64px] w-full resize-none border border-border bg-[#090909] p-2 font-mono text-[11px] leading-5 text-neutral-300 outline-none focus:border-border-strong" disabled={!settings.enabled || !keyConfigured || isBusy} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) { event.preventDefault(); void sendMessage(); } }} placeholder="Ask Gemini… (⌘/Ctrl+Enter to send)" value={input} />
-        <div className="mt-2 flex items-center justify-between"><span className="font-mono text-[10px] text-neutral-600">{status}</span><button className="border border-border px-3 py-1.5 text-[10px] text-neutral-300 hover:border-border-strong hover:bg-surface-hover disabled:opacity-40" disabled={!input.trim() || !settings.enabled || !keyConfigured || isBusy} onClick={() => void sendMessage()} type="button">{isBusy ? "Working" : "Ask Gemini"}</button></div>
+        <textarea aria-label="Onyx agent prompt" className="min-h-[64px] w-full resize-none border border-border bg-[#090909] p-2 font-mono text-[11px] leading-5 text-neutral-300 outline-none focus:border-border-strong" disabled={!settings.enabled || !keyConfigured || isBusy} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) { event.preventDefault(); void sendMessage(); } }} placeholder={`Ask ${providerLabel}… (⌘/Ctrl+Enter to send)`} value={input} />
+        <div className="mt-2 flex items-center justify-between"><span className="font-mono text-[10px] text-neutral-600">{status}</span><button className="border border-border px-3 py-1.5 text-[10px] text-neutral-300 hover:border-border-strong hover:bg-surface-hover disabled:opacity-40" disabled={!input.trim() || !settings.enabled || !keyConfigured || isBusy} onClick={() => void sendMessage()} type="button">{isBusy ? "Working" : "Ask Agent"}</button></div>
       </div>
     </section>
   );
