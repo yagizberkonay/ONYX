@@ -355,6 +355,6 @@ Proje şu anda `package.json` veya `Cargo.toml` içinde bir açık kaynak lisans
 
 ---
 
-**Yazar:** Manus AI  
+**Yazar:** Yağız Berk Önay 
 **Ürün:** Onyx 0.1.0  
 **Mimari:** Tauri v2 · Next.js · React · TypeScript · Tailwind CSS · Rust · Gemini BYOK
